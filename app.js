@@ -7,28 +7,28 @@ const stationCodes = {
     "Frankfurt Hbf": "8000105"
 };
 
+// Listen for clicks on the check button
 document.getElementById("checkButton").addEventListener("click", async function() {
 
     const selectedStation = document.getElementById("stationSelect").value;
     
     const stationCode = stationCodes[selectedStation];
     
+    // Find the result container in the HTML
     const resultBox = document.getElementById("apiResult");
 
     resultBox.innerHTML = `Loading data for ${selectedStation} (EVA: ${stationCode})... ⏳`;
 
     try {
-        // DB API target URL
-        const targetUrl = `https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`;
+
+        const targetUrl = `https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}?client_id=${myClientId}&client_secret=${myClientSecret}`;
         
         const proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(targetUrl);
 
         const response = await fetch(proxyUrl, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json',
-                'DB-Client-Id': myClientId,
-                'DB-Api-Key': myClientSecret
+                'Accept': 'application/json'
             }
         });
 
