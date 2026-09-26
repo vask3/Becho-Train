@@ -8,19 +8,24 @@ const stationCodes = {
 };
 
 document.getElementById("checkButton").addEventListener("click", async function() {
+    // Get the selected station name
     const selectedStation = document.getElementById("stationSelect").value;
+    
     const stationCode = stationCodes[selectedStation];
+    
+
     const resultBox = document.getElementById("apiResult");
 
     resultBox.innerHTML = `Loading data for ${selectedStation} (EVA: ${stationCode})... ⏳`;
 
     try {
+
         const response = await fetch(`https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Client-Id': myClientId,
-                'Client-Secret': myClientSecret
+                'DB-Client-Id': myClientId,
+                'DB-Api-Key': myClientSecret
             }
         });
 
@@ -35,6 +40,6 @@ document.getElementById("checkButton").addEventListener("click", async function(
 
     } catch (error) {
         resultBox.innerHTML = `<span style="color: red;">Request error: ${error.message}</span><br>` +
-                              `<small>Check if your Client ID/Secret are active and if there is any browser CORS blocking.</small>`;
+                              `<small>Check if your Client ID/API Key are active and if there is any browser CORS blocking.</small>`;
     }
 });
