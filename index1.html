@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Becho Rail 🚆</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #cc0000;
+            margin-top: 0;
+            font-size: 24px;
+        }
+        p {
+            color: #666;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        select, button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        select {
+            flex: 1;
+            background: #fff;
+        }
+        button {
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #a30000;
+        }
+        #result-container {
+            margin-top: 25px;
+        }
+        .result-box {
+            background: #fdfdfd;
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            text-align: left;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            color: #444;
+        }
+        .status-active {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>DB Trains 🚆</h1>
+        <p>Изберете гара, за да проверите актуалното разписание и състояние на влаковете:</p>
+        
+        <div class="controls">
+            <select id="station-select">
+                <option value="8011160">Берлин (Berlin Hbf)</option>
+                <option value="8000261">Мюнхен (München Hbf)</option>
+                <option value="8000105">Франкфурт (Frankfurt Hbf)</option>
+            </select>
+            <button onclick="checkSchedule()">Провери разписание и състояние</button>
+        </div>
+
+        <div id="result-container"></div>
+    </div>
+
+    <script>
+        async function checkSchedule() {
+            const stationId = document.getElementById('station-select').value;
+            const container = document.getElementById('result-container');
+            
+            container.innerHTML = `<p style="text-align: center; color: #888;">Зареждане на данни от v6.db.transport.rest...</p>`;
+
+            try {
+                // Използваме директно публичното API v6.db.transport.rest
+                const response = await fetch(`https://v6.db.transport.rest/stops/${stationId}/departures?duration=60`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP грешка! Статус: ${response.status}`);
+                }
+
+                const data = await response.json();
+                // v6.db.transport.rest връща обекта { departures: [...] } или директно масив в зависимост от версията
+                const departures = Array.isArray(data) ? data : (data.departures || []);
+
+                let stationName = document.getElementById('station-select').selectedOptions[0].text;
+
+                let html = `
+                    <div class="result-box">
+                        <h3 style="margin-top: 0; color: #222;">🚉 ${stationName}</h3>
+                        <p style="margin: 5px 0;"><strong>EVA номер:</strong> ${stationId} | <strong>Статус:</strong> <span class="status-active">● активна</span></p>
+                        
+                        <h4 style="margin-top: 20px; border-bottom: 2px solid #eee; padding-bottom: 8px;">Разписание на влаковете:</h4>
+                `;
+
+                if (departures.length > 0) {
+                    html += `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Час</th>
+                                    <th>Влак</th>
+                                    <th>Дестинация</th>
+                                    <th>Перон</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    departures.forEach(dep => {
+                        // Форматиране на часа от ISO формат (напр. "2026-06-06T12:30:00+02:00")
+                        const dateObj = new Date(dep.when || dep.plannedWhen);
+                        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        // Изчисляване на закъснението в минути
+                        const delayMin = Math.round((dep.delay || 0) / 60);
+                        const isDelayed = delayMin > 0;
+                        const delayText = isDelayed ? `+${delayMin} мин` : 'Точно';
+                        const delayColor = isDelayed ? '#d9534f' : '#28a745';
+
+                        const trainName = dep.line && dep.line.name ? dep.line.name : (dep.tripId || 'Влак');
+                        const destination = dep.destination && dep.destination.name ? dep.destination.name : 'Неизвестна';
+                        const platform = dep.platform || dep.plannedPlatform || '-';
+
+                        html += `
+                            <tr>
+                                <td>${timeStr}</td>
+                                <td><strong>${trainName}</strong></td>
+                                <td>${destination}</td>
+                                <td>${platform}</td>
+                                <td style="color: ${delayColor}; font-weight: bold;">${delayText}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table>`;
+                } else {
+                    html += `<p>Няма налични данни за заминаващи влакове в момента.</p>`;
+                }
+
+                html += `</div>`;
+                container.innerHTML = html;
+
+            } catch (error) {
+                container.innerHTML = `<p style="color: #d9534f; background: #fdf2f2; padding: 10px; border-radius: 5px;">Грешка при връзката с API: ${error.message}</p>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
