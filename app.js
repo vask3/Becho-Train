@@ -7,42 +7,37 @@ const stationCodes = {
     "Frankfurt Hbf": "8000105"
 };
 
-// Listen for clicks on the check button
 document.getElementById("checkButton").addEventListener("click", async function() {
-
     const selectedStation = document.getElementById("stationSelect").value;
-    
     const stationCode = stationCodes[selectedStation];
-    
-    // Find the result container in the HTML
     const resultBox = document.getElementById("apiResult");
 
     resultBox.innerHTML = `Loading data for ${selectedStation} (EVA: ${stationCode})... ⏳`;
 
     try {
+        const targetUrl = `https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`;
+        const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
 
-        const targetUrl = `https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}?client_id=${myClientId}&client_secret=${myClientSecret}`;
-        
-        const proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(targetUrl);
-
-        const response = await fetch(proxyUrl, {
+        const directResponse = await fetch(proxyUrl, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'DB-Client-Id': myClientId,
+                'DB-Api-Key': myClientSecret
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!directResponse.ok) {
+            throw new Error(`HTTP error! Status: ${directResponse.status}`);
         }
 
-        const data = await response.json();
+        const data = await directResponse.json();
         
         resultBox.innerHTML = `<strong>Successfully connected to the Deutsche Bahn API! 🎉</strong><br>` +
                               `<pre>${JSON.stringify(data, null, 2)}</pre>`;
 
     } catch (error) {
         resultBox.innerHTML = `<span style="color: red;">Request error: ${error.message}</span><br>` +
-                              `<small>Check if your Client ID/API Key are active.</small>`;
+                              `<small>Check if your Client ID/API Key are active and subscription is complete.</small>`;
     }
 });
