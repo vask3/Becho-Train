@@ -1,5 +1,5 @@
 const myClientId = "aefd8b2f360ebfe5cab9f402d049139e";
-const myClientSecret = "e087a444aec3004eae6a3a0e60f1942d";
+const myClientSecret = "f1063739bb9c58fdc5e8ba9208e68d9b";
 
 const stationCodes = {
     "Berlin Hbf": "8011160",
@@ -33,11 +33,10 @@ document.getElementById("checkButton").addEventListener("click", async function(
 
         const data = await directResponse.json();
         
-        resultBox.innerHTML = `<strong>Successfully connected to the Deutsche Bahn API! 🎉</strong><br>` +
+        resultBox.innerHTML = `<strong>Successfully connected to StaDa API! 🎉</strong><br>` +
                               `<pre>${JSON.stringify(data, null, 2)}</pre>`;
 
     } catch (error) {
-        resultBox.innerHTML = `<span style="color: red;">Request error: ${error.message}</span><br>` +
-                              `<small>Check if your Client ID/API Key are active and subscription is complete.</small>`;
+        resultBox.innerHTML = `<span style="color: red;">Request error: ${error.message}</span>`;
     }
 });
