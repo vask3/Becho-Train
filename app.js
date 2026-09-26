@@ -1,42 +1,40 @@
-const myClientId = "aefd8b2f360ebfe5cab9f402d049139e";
-const myClientSecret = "f1063739bb9c58fdc5e8ba9208e68d9b";
-
 const stationCodes = {
     "Berlin Hbf": "8011160",
     "München Hbf": "8000261",
-    "Frankfurt Hbf": "8000105"
+    "Frankfurt Hbf": "8000105",
+    "Hamburg Hbf": "8002549"
 };
 
-document.getElementById("checkButton").addEventListener("click", async function() {
-    const selectedStation = document.getElementById("stationSelect").value;
-    const stationCode = stationCodes[selectedStation];
+document.addEventListener("DOMContentLoaded", () => {
+    const checkButton = document.getElementById("checkButton");
+    const stationSelect = document.getElementById("stationSelect");
     const resultBox = document.getElementById("apiResult");
 
-    resultBox.innerHTML = `Loading data for ${selectedStation} (EVA: ${stationCode})... ⏳`;
+    if (!checkButton || !stationSelect || !resultBox) return;
 
-    try {
-        const targetUrl = `https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`;
-        const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
+    checkButton.addEventListener("click", async () => {
+        const selectedStation = stationSelect.value;
+        const stationCode = stationCodes[selectedStation] || "8011160";
 
-        const directResponse = await fetch(proxyUrl, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'DB-Client-Id': myClientId,
-                'DB-Api-Key': myClientSecret
+        resultBox.innerHTML = `Зареждам данни за ${selectedStation}...`;
+
+        try {
+            const proxyUrl = `https://becho-rail-proxy.grackiglas.workers.dev/?id=${stationCode}`;
+            const response = await fetch(proxyUrl);
+
+            if (!response.ok) {
+                throw new Error(`Грешка: ${response.status}`);
             }
-        });
 
-        if (!directResponse.ok) {
-            throw new Error(`HTTP error! Status: ${directResponse.status}`);
+            const data = await response.json();
+            
+            resultBox.innerHTML = `<strong>Успешна връзка! 🎉</strong><br>` +
+                                  `<pre style="background: #f4f4f4; padding: 10px; border-radius: 5px; text-align: left; max-height: 400px; overflow: auto;">` +
+                                  JSON.stringify(data, null, 2) + 
+                                  `</pre>`;
+
+        } catch (error) {
+            resultBox.innerHTML = `<span style="color: red;">Възникна проблем: ${error.message}</span>`;
         }
-
-        const data = await directResponse.json();
-        
-        resultBox.innerHTML = `<strong>Successfully connected to StaDa API! 🎉</strong><br>` +
-                              `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-
-    } catch (error) {
-        resultBox.innerHTML = `<span style="color: red;">Request error: ${error.message}</span>`;
-    }
+    });
 });
