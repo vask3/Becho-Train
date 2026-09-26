@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Becho Rail - Графици и Състояния</title>
+</head>
+<body>
+    <h1>DB Trains 🚆</h1>
+    <p>Choose a station to check the schedule and the status of the facilities:</p>
+
+<label for="stationSelect">Изберете гара:</label>
+<select id="stationSelect">
+        <option value="Berlin Hbf">Берлин (Berlin Hbf)</option>
+        <option value="München Hbf">Мюнхен (München Hbf)</option>
+        <option value="Frankfurt Hbf">Франкфурт (Frankfurt Hbf)</option>
+</select>
+
+<br><br>
+<button id="checkButton">Провери разписание и състояние</button>
+
+    
+<div id="apiResult" style="margin-top: 20px; font-family: monospace;"></div>
+<script src="app.js"></script>
+
+</body>
+</html>
