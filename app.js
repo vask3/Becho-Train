@@ -20,15 +20,14 @@ document.getElementById("checkButton").addEventListener("click", async function(
 
     try {
 
-        const response = await fetch(`https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'DB-Client-Id': myClientId,
-                'DB-Api-Key': myClientSecret
-            }
-        });
-
+        const response = await fetch(`https://corsproxy.io/?https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`, {
+    method: 'GET',
+    headers: {
+        'Accept': 'application/json',
+        'DB-Client-Id': myClientId,
+        'DB-Api-Key': myClientSecret
+    }
+});
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
