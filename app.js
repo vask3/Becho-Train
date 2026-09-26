@@ -8,26 +8,30 @@ const stationCodes = {
 };
 
 document.getElementById("checkButton").addEventListener("click", async function() {
-    // Get the selected station name
+
     const selectedStation = document.getElementById("stationSelect").value;
     
     const stationCode = stationCodes[selectedStation];
     
-
     const resultBox = document.getElementById("apiResult");
 
     resultBox.innerHTML = `Loading data for ${selectedStation} (EVA: ${stationCode})... ⏳`;
 
     try {
+        // DB API target URL
+        const targetUrl = `https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`;
+        
+        const proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(targetUrl);
 
-        const response = await fetch(`https://corsproxy.io/?https://apis.deutschebahn.com/db-api-marketplace/apis/stada/v2/stations/${stationCode}`, {
-    method: 'GET',
-    headers: {
-        'Accept': 'application/json',
-        'DB-Client-Id': myClientId,
-        'DB-Api-Key': myClientSecret
-    }
-});
+        const response = await fetch(proxyUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'DB-Client-Id': myClientId,
+                'DB-Api-Key': myClientSecret
+            }
+        });
+
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -39,6 +43,6 @@ document.getElementById("checkButton").addEventListener("click", async function(
 
     } catch (error) {
         resultBox.innerHTML = `<span style="color: red;">Request error: ${error.message}</span><br>` +
-                              `<small>Check if your Client ID/API Key are active and if there is any browser CORS blocking.</small>`;
+                              `<small>Check if your Client ID/API Key are active.</small>`;
     }
 });
