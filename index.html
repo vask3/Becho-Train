@@ -2,176 +2,38 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Becho Rail 🚆</title>
+    <title>BVG Трафик</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        .card {
-            background: #ffffff;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-        }
-        h1 {
-            color: #cc0000;
-            margin-top: 0;
-            font-size: 24px;
-        }
-        input, button {
-            padding: 10px 15px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            margin-right: 5px;
-            margin-bottom: 10px;
-        }
-        input[type="text"] {
-            flex: 1;
-            min-width: 200px;
-        }
-        button {
-            background-color: #cc0000;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background-color: #a30000;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            text-align: left;
-        }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background: #f8f9fa;
-            color: #444;
-        }
+        body { font-family: sans-serif; background: #000; color: #ff0; padding: 20px; }
+        .item { border-bottom: 1px solid #333; padding: 8px 0; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>DB Trains 🚆 - Търсене на гара</h1>
-        <p>Въведете EVA номер на гара (напр. 8011160 за Берлин):</p>
-        
-        <div>
-            <input type="text" id="station-input" placeholder="EVA код (напр. 8011160)">
-            <button id="search-btn">Търси</button>
-        </div>
-
-        <div id="station-results"></div>
-
-        <div id="departures-section" style="display:none; margin-top: 20px;">
-            <h2 id="departures-title"></h2>
-            <div style="margin-bottom: 10px;">
-                <input type="text" id="line-filter" placeholder="Филтър по линия/влак...">
-                <button id="group-btn">Групирай по линия</button>
-            </div>
-            <div id="departures-results"></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h1>Търсене на маршрут</h1>
-        <div>
-            <input type="text" id="from-input" placeholder="От станция (EVA)">
-            <input type="text" id="to-input" placeholder="До станция (EVA)">
-            <button id="journey-btn">Търси маршрут</button>
-        </div>
-        <div id="journey-results"></div>
-    </div>
+    <h2>BVG На живо (Alexanderplatz)</h2>
+    <div id="board">Зареждане...</div>
 
     <script>
-        document.getElementById('search-btn').addEventListener('click', async () => {
-            const stationId = document.getElementById('station-input').value.trim() || '8011160';
-            const stationResults = document.getElementById('station-results');
-            const departuresSection = document.getElementById('departures-section');
-            const departuresTitle = document.getElementById('departures-title');
-            const departuresResults = document.getElementById('departures-results');
-
-            stationResults.innerHTML = `<p style="color: #888;">Зареждане...</p>`;
-            departuresSection.style.display = 'none';
-
+        async function loadBVG() {
             try {
-                const response = await fetch(`https://becho-rail-proxy.grackiglas.workers.dev/?id=${stationId}`);
-                const data = await response.json();
-
-                const station = data.station || {};
-                const departures = data.departures || [];
-
-                stationResults.innerHTML = `
-                    <div style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #eee; border-radius: 6px;">
-                        <h3>🚉 ${station.name || 'Гара'}</h3>
-                        <p><strong>EVA номер:</strong> ${station.evaNumber || stationId} | <strong>Статус:</strong> <span style="color: green; font-weight: bold;">● ${station.status || 'active'}</span></p>
-                    </div>
-                `;
-
-                departuresTitle.innerText = `Разписание за ${station.name || stationId}`;
+                // Използва публичното VBB/BVG API за спирка Alexanderplatz (ID: 900100003)
+                const res = await fetch('https://v6.bvg.transport.rest/stops/900100003/departures?duration=15');
+                const data = await res.json();
                 
-                if (departures.length > 0) {
-                    let html = `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Час</th>
-                                    <th>Влак</th>
-                                    <th>Дестинация</th>
-                                    <th>Перон</th>
-                                    <th>Статус</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-
-                    departures.forEach(dep => {
-                        const isDelayed = dep.delay && dep.delay.includes('+');
-                        const delayColor = isDelayed ? '#d9534f' : '#28a745';
-                        html += `
-                            <tr>
-                                <td>${dep.time}</td>
-                                <td><strong>${dep.train}</strong></td>
-                                <td>${dep.destination}</td>
-                                <td>${dep.track}</td>
-                                <td style="color: ${delayColor}; font-weight: bold;">${dep.delay}</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `</tbody></table>`;
-                    departuresResults.innerHTML = html;
-                } else {
-                    departuresResults.innerHTML = `<p>Няма намерени влакове.</p>`;
-                }
-
-                departuresSection.style.display = 'block';
-
-            } catch (error) {
-                stationResults.innerHTML = `<p style="color: red;">Грешка при заявката: ${error.message}</p>`;
+                let html = '';
+                data.departures.forEach(d => {
+                    let when = new Date(d.when || d.plannedWhen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    html += `<div class="item"><b>${d.line.name}</b> към ${d.direction} — <b>${when}</b></div>`;
+                });
+                
+                document.getElementById('board').innerHTML = html || 'Няма налични курсове.';
+            } catch (e) {
+                document.getElementById('board').innerHTML = 'Грешка при зареждане на данните.';
             }
-        });
-
-        // Заготовка за бутона за маршрути
-        document.getElementById('journey-btn').addEventListener('click', () => {
-            const from = document.getElementById('from-input').value;
-            const to = document.getElementById('to-input').value;
-            document.getElementById('journey-results').innerHTML = `<p style="margin-top: 10px; color: #666;">Търсене на маршрут от ${from} до ${to} в процес на разработка...</p>`;
-        });
+        }
+        
+        loadBVG();
+        setInterval(loadBVG, 30000); // Опреснява на всеки 30 секунди
     </script>
 
 </body>
