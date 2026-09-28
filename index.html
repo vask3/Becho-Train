@@ -1,40 +1,69 @@
 <!DOCTYPE html>
-<html lang="bg">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>BVG Трафик</title>
+    <meta charset="utf-8">
+    <title>BVG Live</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #ff0; padding: 20px; }
-        .item { border-bottom: 1px solid #333; padding: 8px 0; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            color: #222;
+            padding: 20px;
+        }
+        .box {
+            background: #fff;
+            padding: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .bus {
+            background: #222;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <h2>BVG На живо (Alexanderplatz)</h2>
-    <div id="board">Зареждане...</div>
+<div class="box">
+    <h3>Alexanderplatz departures</h3>
+    <div id="app">Loading...</div>
+</div>
 
-    <script>
-        async function loadBVG() {
-            try {
-                // Използва публичното VBB/BVG API за спирка Alexanderplatz (ID: 900100003)
-                const res = await fetch('https://v6.bvg.transport.rest/stops/900100003/departures?duration=15');
-                const data = await res.json();
-                
-                let html = '';
-                data.departures.forEach(d => {
-                    let when = new Date(d.when || d.plannedWhen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    html += `<div class="item"><b>${d.line.name}</b> към ${d.direction} — <b>${when}</b></div>`;
-                });
-                
-                document.getElementById('board').innerHTML = html || 'Няма налични курсове.';
-            } catch (e) {
-                document.getElementById('board').innerHTML = 'Грешка при зареждане на данните.';
-            }
-        }
+<script>
+async function getTimes() {
+    try {
+        let r = await fetch('https://v6.bvg.transport.rest/stops/900100003/departures?duration=15');
+        let data = await r.json();
         
-        loadBVG();
-        setInterval(loadBVG, 30000); // Опреснява на всеки 30 секунди
-    </script>
+        let html = '';
+        data.departures.forEach(d => {
+            let t = new Date(d.when || d.plannedWhen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            html += `<div class="row">
+                <span class="bus">${d.line.name}</span>
+                <span>to ${d.direction}</span>
+                <b>${t}</b>
+            </div>`;
+        });
+        
+        document.getElementById('app').innerHTML = html;
+    } catch (err) {
+        document.getElementById('app').innerText = 'Error loading data';
+    }
+}
+
+getTimes();
+setInterval(getTimes, 30000);
+</script>
 
 </body>
 </html>
